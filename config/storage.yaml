@@ -1,0 +1,26 @@
+# Storage configuration for Iceberg + MinIO
+catalog:
+  type: rest  # rest or hive
+  uri: http://iceberg-rest:8181
+  warehouse: s3://warehouse/
+
+s3:
+  endpoint: http://minio:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket: warehouse
+  path_style_access: true
+
+namespaces:
+  bronze: nyc_taxi.bronze
+  silver: nyc_taxi.silver
+  gold: nyc_taxi.gold
+
+spark:
+  master: local[*]
+  app_name: nyc_taxi_iceberg
+  packages:
+    - org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.2
+    - org.apache.hadoop:hadoop-aws:3.3.4
+    - software.amazon.awssdk:bundle:2.23.9
+    - software.amazon.awssdk:url-connection-client:2.23.9

@@ -1,0 +1,38 @@
+graph TB
+    subgraph "Quality Gate"
+        A[Raw Data] -->|schema check| B{Schema Valid?}
+        B -->|yes| C[Null Checks]
+        B -->|no| Z[FAIL: Missing Columns]
+        C --> D[Range Checks<br/>passenger, distance, fare]
+        D --> E[Temporal Sanity<br/>pickup < dropoff]
+        E --> F[Outlier Detection<br/>IQR Method]
+        F --> G[Duplicate Check]
+        G --> H{Quality Score}
+    end
+
+    subgraph "Repair Pipeline"
+        H -->|issues found| I[Targeted Repair]
+        I --> J[swap_datetime<br/>Fix reversed timestamps]
+        I --> K[clamp_passenger<br/>Fix count range]
+        I --> L[abs_distance<br/>Fix negatives]
+        I --> M[winsorize_fare<br/>Cap outliers]
+        I --> N[drop_zero_duration<br/>Remove impossible]
+    end
+
+    subgraph "Audit Artifacts"
+        J --> O[repair_patch.json]
+        K --> O
+        L --> O
+        M --> O
+        N --> O
+        H --> P[quality_report.md]
+        O --> Q[metrics.json<br/>Before/After Comparison]
+        P --> R[catalog.json]
+        Q --> R
+    end
+
+    subgraph "LLM Suggestions"
+        P --> S[LLM Stub Engine]
+        S --> T[llm_suggestions.json<br/>Review Queue]
+        S --> U[llm_suggestions.md<br/>Human Report]
+    end

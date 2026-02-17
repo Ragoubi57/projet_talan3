@@ -1,0 +1,37 @@
+FROM python:3.11-slim
+
+# Install Java for PySpark
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless \
+        curl \
+        procps \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# Create non-root user
+RUN groupadd -r pipeline && useradd -r -g pipeline -m pipeline
+
+WORKDIR /app
+
+# Copy requirements and install
+COPY requirements.txt requirements-extra.txt ./
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-extra.txt || true
+
+# Copy project files
+COPY config/ config/
+COPY scripts/ scripts/
+COPY src/ src/
+COPY sql/ sql/
+
+# Create output directories
+RUN mkdir -p reports logs data/raw /app/shared_data && \
+    chown -R pipeline:pipeline /app
+
+USER pipeline
+
+ENTRYPOINT ["python"]
+CMD ["scripts/run_all.py"]
