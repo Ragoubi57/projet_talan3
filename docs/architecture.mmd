@@ -1,0 +1,44 @@
+graph TB
+    subgraph "Data Plane (Iceberg on MinIO)"
+        A[MinIO S3 Object Store]
+        B[Iceberg REST Catalog]
+        C[Bronze Layer<br/>Raw Trips]
+        D[Silver Layer<br/>Validated + Repaired]
+        E[Gold Layer<br/>Demand Features]
+    end
+
+    subgraph "AI Steward Control Plane"
+        F[Data Quality Checks<br/>Schema/Null/Range/Temporal]
+        G[Targeted Repair<br/>ActiveClean-inspired]
+        H[LLM Suggestions<br/>Offline-safe Stub]
+        I[Quality Reports]
+    end
+
+    subgraph "ML Product Layer"
+        J[Feature Engineering<br/>Lag/Rolling/Temporal]
+        K[Demand Forecasting<br/>LightGBM/GBR]
+        L[Trip Clustering<br/>KMeans]
+        M[Drift Monitoring<br/>PSI/KS]
+        N[MLflow Tracking]
+    end
+
+    subgraph "Infrastructure (Docker)"
+        O[Spark<br/>Iceberg R/W]
+        P[MLflow + Postgres]
+        Q[Pipeline Container]
+    end
+
+    A --- B
+    B --- C
+    C --> D
+    D --> E
+    F --> G
+    G --> D
+    H --> I
+    J --> E
+    E --> K
+    E --> L
+    E --> M
+    K --> N
+    O --> A
+    Q --> O

@@ -1,0 +1,5 @@
+# Optional extras – installed on best-effort basis
+hdbscan>=0.8
+evidently>=0.4
+featuretools>=1.28
+kaggle>=1.6

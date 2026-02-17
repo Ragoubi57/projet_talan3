@@ -1,0 +1,53 @@
+sequenceDiagram
+    participant User
+    participant Pipeline as run_all.py
+    participant Ingest as Ingestion
+    participant Spark as Spark/Iceberg
+    participant QA as Quality Checker
+    participant Repair as Targeted Repairer
+    participant Features as Feature Engineering
+    participant Model as Forecast Model
+    participant Cluster as Clustering
+    participant Drift as Drift Monitor
+    participant MLflow as MLflow Server
+    participant Reports as Report Generator
+
+    User->>Pipeline: docker compose run pipeline
+    Pipeline->>Ingest: ingest(config)
+    Ingest-->>Pipeline: raw_df (Kaggle or Synthetic)
+
+    Pipeline->>Spark: write_bronze(raw_df)
+    Spark-->>Pipeline: bronze table created
+
+    Pipeline->>QA: run_all_checks(raw_df)
+    QA-->>Pipeline: quality_results_before
+
+    Pipeline->>Pipeline: build silver (validate + standardize)
+
+    Pipeline->>Features: build_demand_zone_hour(silver_df)
+    Features-->>Pipeline: gold_df_baseline
+
+    Pipeline->>Spark: write_gold(gold_df_baseline)
+
+    Pipeline->>Model: train_forecast_model(gold_baseline)
+    Model-->>Pipeline: baseline_metrics (MAE, RMSE, sMAPE)
+    Pipeline->>MLflow: log_to_mlflow(baseline)
+
+    Pipeline->>Repair: apply_all_repairs(silver_df)
+    Repair-->>Pipeline: repaired_df + repair_log
+
+    Pipeline->>Features: build_demand_zone_hour(repaired_df)
+    Features-->>Pipeline: gold_df_repaired
+
+    Pipeline->>Model: train_forecast_model(gold_repaired)
+    Model-->>Pipeline: repaired_metrics (improved)
+    Pipeline->>MLflow: log_to_mlflow(post_repair)
+
+    Pipeline->>Cluster: cluster_trips(gold_repaired)
+    Cluster-->>Pipeline: cluster_summary
+
+    Pipeline->>Drift: check_drift(reference, simulated)
+    Drift-->>Pipeline: drift_results
+
+    Pipeline->>Reports: generate all artifacts
+    Reports-->>User: reports/, logs/
